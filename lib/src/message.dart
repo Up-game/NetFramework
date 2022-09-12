@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:messagepack/messagepack.dart';
+import 'package:netframework/src/connection.dart';
 
 class MessageHeader<T> {
   T? id;
@@ -72,4 +73,11 @@ class Message<T extends Enum> {
   String toString() {
     return 'Message<${T.toString()}> {id: ${header.id}, size: ${header.size}}';
   }
+}
+
+class OwnedMessage<T extends Enum> {
+  final Connection connection;
+  final Message<T> message;
+
+  OwnedMessage({required this.connection, required this.message});
 }
