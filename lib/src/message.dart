@@ -1,31 +1,43 @@
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:messagepack/messagepack.dart';
 import 'package:netframework/src/connection.dart';
 
-class MessageHeader<T> {
-  T? id;
+class MessageHeader {
+  String id;
   int size;
 
-  MessageHeader({this.id, this.size = 0});
+  MessageHeader({this.id = '', this.size = 0});
 }
 
-class Message<T extends Enum> {
-  final MessageHeader<T> header = MessageHeader<T>();
+class Message {
+  late final MessageHeader header;
   final _packer = Packer();
   final Unpacker? _unpacker;
   Uint8List? _data;
 
-  Message({Uint8List? data, T? id})
-      : _data = data,
-        _unpacker = data != null ? Unpacker(data) : null {
-    header.id = id;
-    if (data != null) {
-      header.size = data.length;
-    }
+  Message({MessageHeader? header, Unpacker? unpacker})
+      : _unpacker = unpacker,
+        header = header ?? MessageHeader();
+
+  factory Message.fromBytes(Uint8List data) {
+    final Unpacker unpacker = Unpacker(data);
+
+    final id = unpacker.unpackString();
+    final size = unpacker.unpackInt()!;
+
+    MessageHeader header = MessageHeader(id: id!, size: size);
+
+    return Message(header: header, unpacker: unpacker);
   }
 
   Uint8List? get data => _data;
   int get size => _data?.length ?? 0;
+
+  void addHeader() {
+    _packer.packString(header.id.toString());
+    _packer.packInt(header.size);
+  }
 
   void addInt(int value) {
     _packer.packInt(value);
@@ -71,13 +83,13 @@ class Message<T extends Enum> {
 
   @override
   String toString() {
-    return 'Message<${T.toString()}> {id: ${header.id}, size: ${header.size}}';
+    return 'Message{id: ${header.id}, size: ${header.size}}';
   }
 }
 
-class OwnedMessage<T extends Enum> {
+class OwnedMessage {
   final Connection connection;
-  final Message<T> message;
+  final Message message;
 
   OwnedMessage({required this.connection, required this.message});
 }
