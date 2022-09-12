@@ -15,21 +15,22 @@ class Connection {
       {required Socket socket, required Queue<OwnedMessage> messagesQueueIn})
       : _socket = socket,
         _messagesQueueIn = messagesQueueIn {
-    socket.listen(onEvent, onDone: onDone, onError: onError);
+    socket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
 
-  void onEvent(Uint8List data) {
+  void _onEvent(Uint8List data) {
+    print("Event received: ${data.length} bytes");
     final message = Message.fromBytes(data);
 
     final ownedMessage = OwnedMessage(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
   }
 
-  void onDone() {
+  void _onDone() {
     _isOpen = false;
   }
 
-  void onError() {
+  void _onError(Object error) {
     _isOpen = false;
   }
 }
