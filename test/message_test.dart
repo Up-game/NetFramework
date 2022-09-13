@@ -10,14 +10,12 @@ void main() {
     test('Constructor', () {
       final MessageHeader header = MessageHeader();
       expect(header.id, '');
-      expect(header.size, 0);
     });
 
     test('Constructor with id', () {
       final MessageHeader header =
           MessageHeader(id: MessageType.ping.toString());
       expect(header.id, MessageType.ping.toString());
-      expect(header.size, 0);
     });
   });
 
@@ -25,14 +23,12 @@ void main() {
     test('Constructor', () {
       final Message message = Message();
       expect(message.header.id, '');
-      expect(message.header.size, 0);
     });
 
     test('Constructor with id', () {
       final Message message =
           Message(header: MessageHeader(id: MessageType.ping.toString()));
       expect(message.header.id, MessageType.ping.toString());
-      expect(message.header.size, 0);
     });
 
     test('add int', () {

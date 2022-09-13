@@ -37,12 +37,14 @@ abstract class Server {
     }
   }
 
+  /// Send a [message] to a [connection].
   void sendToClient(Connection connection, Message message) {
     if (connection.isOpen) {
       connection.send(message);
     }
   }
 
+  /// Send a [message] to all connected clients.
   void sendToAllClients(Message message) {
     for (final connection in _connections) {
       if (connection.isOpen) {
@@ -51,10 +53,12 @@ abstract class Server {
     }
   }
 
+  /// Called when the serverSocket is done.
   void _onDone() {
     _serverSocket?.close();
   }
 
+  /// Called when the serverSocket has an error.
   void _onError(Object error) {
     _serverSocket?.close();
   }

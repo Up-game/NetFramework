@@ -4,9 +4,8 @@ import 'package:netframework/src/connection.dart';
 
 class MessageHeader {
   String id;
-  int size;
 
-  MessageHeader({this.id = '', this.size = 0});
+  MessageHeader({this.id = ''});
 }
 
 class Message {
@@ -23,9 +22,8 @@ class Message {
     final Unpacker unpacker = Unpacker(data);
 
     final id = unpacker.unpackString();
-    final size = unpacker.unpackInt()!;
 
-    MessageHeader header = MessageHeader(id: id!, size: size);
+    MessageHeader header = MessageHeader(id: id!);
 
     return Message(header: header, unpacker: unpacker);
   }
@@ -35,7 +33,6 @@ class Message {
 
   void addHeader() {
     _packer.packString(header.id.toString());
-    _packer.packInt(header.size);
   }
 
   void addInt(int value) {
@@ -77,12 +74,11 @@ class Message {
   void pack() {
     if (_data != null) return;
     _data = _packer.takeBytes();
-    header.size = _data!.length;
   }
 
   @override
   String toString() {
-    return 'Message{id: ${header.id}, size: ${header.size}}';
+    return 'Message{id: ${header.id}}';
   }
 }
 

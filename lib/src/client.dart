@@ -14,6 +14,7 @@ abstract class Client {
   Queue<OwnedMessage> get incoming => _messagesQueueIn;
   Connection? get connection => _connection;
 
+  /// Connect to the server with an [ip] and a [port].
   Future<void> connect(String ip, int port) async {
     final socket = await Socket.connect(ip, port);
     _connection = Connection(
@@ -23,10 +24,12 @@ abstract class Client {
     );
   }
 
+  /// Disconnect from the server.
   Future<void> disconnect() async {
     await _connection?.close();
   }
 
+  /// Send a [message] to the server.
   void send(Message message) {
     assert(_connection != null, "Connect first before sending messages");
     message.pack();
