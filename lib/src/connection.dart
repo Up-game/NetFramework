@@ -13,6 +13,7 @@ class Connection<T extends Enum> {
   final Socket _socket;
   final Queue<OwnedMessage<T>> _messagesQueueIn;
   final void Function(Connection)? _onDoneCallback;
+  void Function(Connection)? _onEventCallback;
   final void Function(Connection, Object)? _onErrorCallback;
   bool _isOpen = true;
 
@@ -23,10 +24,12 @@ class Connection<T extends Enum> {
     required Socket socket,
     required Queue<OwnedMessage<T>> messagesQueueIn,
     void Function(Connection)? onDoneCallback,
+    void Function(Connection)? onEventCallback,
     void Function(Connection, Object)? onErrorCallback,
   })  : id = idCounter++,
         _onDoneCallback = onDoneCallback,
         _onErrorCallback = onErrorCallback,
+        _onEventCallback = onEventCallback,
         _socket = socket,
         _messagesQueueIn = messagesQueueIn {
     socket.listen(_onEvent, onDone: _onDone, onError: _onError);
@@ -38,6 +41,9 @@ class Connection<T extends Enum> {
 
     final ownedMessage = OwnedMessage<T>(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
+    if (_onEventCallback != null) {
+      _onEventCallback!(this);
+    }
   }
 
   void _onDone() {

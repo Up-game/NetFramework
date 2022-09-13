@@ -21,14 +21,32 @@ abstract class Client<T extends Enum> {
       owner: ConnectionOwner.client,
       socket: socket,
       messagesQueueIn: _messagesQueueIn,
+      onDoneCallback: onDone,
+      onErrorCallback: onError,
     );
 
     onConnected();
   }
 
+  /// Called when the connection is established.
   void onConnected() {
     print("connected");
   }
+
+  /// Called when the connection is closed.
+  void onDone(Connection connection) {
+    print("done");
+  }
+
+  /// Called when the connection is closed.
+  void onError(Connection connection, Object error) {
+    print("error: $error");
+  }
+
+  /// called when a message is received.
+  ///
+  /// To get access to the message, use [incoming].
+  void onEvent(Connection connection) {}
 
   /// Disconnect from the server.
   Future<void> disconnect() async {
