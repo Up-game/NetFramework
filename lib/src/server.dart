@@ -30,26 +30,24 @@ abstract class Server {
     onServerSttopped();
   }
 
-  void update({int messageNumber = intMax}) {
-    while (_messagesQueueIn.isNotEmpty) {
+  void update({int numberOfMessageToRead = intMax}) {
+    while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
       final OwnedMessage message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
     }
   }
 
   void sendToClient(Connection connection, Message message) {
-    connection.send(message);
+    if (connection.isOpen) {
+      connection.send(message);
+    }
   }
 
   void sendToAllClients(Message message) {
     for (final connection in _connections) {
-      if (!connection.isOpen) {
-        onClientDisconnected(connection);
-        _connections.remove(connection);
-        return;
+      if (connection.isOpen) {
+        connection.send(message);
       }
-
-      connection.send(message);
     }
   }
 
@@ -61,12 +59,25 @@ abstract class Server {
     _serverSocket?.close();
   }
 
+  /// Called when a new connection is established.
   void _handleConnection(Socket socket) {
+    // This function remove the connection from the list of connections when it is closed.
+    void cleanConnection(Connection connection) {
+      onClientDisconnected(connection);
+      _connections.remove(connection);
+    }
+
     //Create a connection
     final connection = Connection(
       owner: ConnectionOwner.server,
       socket: socket,
       messagesQueueIn: _messagesQueueIn,
+      onDoneCallback: (Connection connection) {
+        cleanConnection(connection);
+      },
+      onErrorCallback: (Connection connection, Object error) {
+        cleanConnection(connection);
+      },
     );
 
     // Give a chance to deny the connection
@@ -94,11 +105,11 @@ abstract class Server {
   ///
   /// Return false to deny the connection.
   bool onClientConnected(Connection connection) {
-    print("Client connected.");
+    print("Client ${connection.id} connected.");
     return true;
   }
 
   void onClientDisconnected(Connection connection) {
-    print("Client disconnected.");
+    print("Client ${connection.id} disconnected.");
   }
 }

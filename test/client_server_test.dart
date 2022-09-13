@@ -62,6 +62,7 @@ void main() {
         await Future.delayed(Duration(milliseconds: 500));
       }
       await client.disconnect();
+      await Future.delayed(Duration(milliseconds: 500));
       await server.stop();
     });
   });
