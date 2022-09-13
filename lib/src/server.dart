@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
@@ -10,6 +11,7 @@ abstract class Server<T extends Enum> {
   final Queue<OwnedMessage<T>> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
+  final StreamController<void> _streamController = StreamController.broadcast();
 
   ServerSocket? _serverSocket;
 
@@ -30,7 +32,18 @@ abstract class Server<T extends Enum> {
     onServerSttopped();
   }
 
-  void update({int numberOfMessageToRead = intMax}) {
+  /// Call this to process new messages
+  ///
+  /// If [blocking] is true, this will block until one message is received.
+  ///
+  /// **Important** If [blocking] is true you must await this function.
+  Future<void> update(
+      {int numberOfMessageToRead = intMax, blocking = false}) async {
+    if (blocking) {
+      // wait for new messages
+      await _streamController.stream.first;
+    }
+
     while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
       final OwnedMessage<T> message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
@@ -82,6 +95,7 @@ abstract class Server<T extends Enum> {
       onErrorCallback: (Connection connection, Object error) {
         cleanConnection(connection);
       },
+      streamController: _streamController,
     );
 
     // Give a chance to deny the connection

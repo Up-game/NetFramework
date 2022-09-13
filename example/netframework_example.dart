@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:isolate';
 
 import 'package:netframework/netframework.dart';
@@ -50,12 +51,17 @@ void main() async {
 
   await Isolate.spawn(startClient, null);
 
-  for (int i = 0; i < 1000; i++) {
-    await Future.delayed(Duration(milliseconds: 1));
-    server.update();
-  }
+  ProcessSignal.sigint.watch().listen((signal) async {
+    if (signal != ProcessSignal.sigusr1) {
+      print("Killing server !");
+      await server.stop();
+      exit(0);
+    }
+  });
 
-  await server.stop();
+  while (true) {
+    await server.update(blocking: true);
+  }
 }
 
 void startClient(int? _) async {

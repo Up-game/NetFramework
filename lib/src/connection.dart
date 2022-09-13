@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'dart:typed_data';
@@ -15,6 +16,7 @@ class Connection<T extends Enum> {
   final void Function(Connection)? _onDoneCallback;
   void Function(Connection)? _onEventCallback;
   final void Function(Connection, Object)? _onErrorCallback;
+  final StreamController<void>? _streamController;
   bool _isOpen = true;
 
   bool get isOpen => _isOpen;
@@ -26,11 +28,13 @@ class Connection<T extends Enum> {
     void Function(Connection)? onDoneCallback,
     void Function(Connection)? onEventCallback,
     void Function(Connection, Object)? onErrorCallback,
+    StreamController<void>? streamController,
   })  : id = idCounter++,
         _onDoneCallback = onDoneCallback,
         _onErrorCallback = onErrorCallback,
         _onEventCallback = onEventCallback,
         _socket = socket,
+        _streamController = streamController,
         _messagesQueueIn = messagesQueueIn {
     socket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
@@ -41,6 +45,7 @@ class Connection<T extends Enum> {
 
     final ownedMessage = OwnedMessage<T>(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
+    _streamController?.sink.add(null);
     if (_onEventCallback != null) {
       _onEventCallback!(this);
     }
