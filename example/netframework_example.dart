@@ -10,7 +10,7 @@ class MyClient extends Client<Directives> {
     Message<Directives> m = Message(header: MessageHeader(id: Directives.ping));
     m.addHeader();
     m.addString(DateTime.now().toIso8601String());
-    print("ping");
+    print("Ping");
     send(m);
   }
 }
