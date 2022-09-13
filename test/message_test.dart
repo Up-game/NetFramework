@@ -66,14 +66,14 @@ void main() {
     test('add bool', () {
       const bool value = true;
 
-      final Message message =
-          Message<MessageType>(header: MessageHeader(id: MessageType.any));
+      final Message<MessageType> message =
+          Message(header: MessageHeader(id: MessageType.any));
       message.addHeader();
       message.addBool(value);
       message.pack();
 
       Uint8List? values = message.data;
-      final Message message2 = Message<MessageType>.fromBytes(values!);
+      final Message<MessageType> message2 = Message.fromBytes(values!);
 
       expect(value, message2.getBool());
     });
@@ -81,14 +81,14 @@ void main() {
     test('add String', () {
       const String value = '404';
 
-      final Message message =
-          Message<MessageType>(header: MessageHeader(id: MessageType.any));
+      final Message<MessageType> message =
+          Message(header: MessageHeader(id: MessageType.any));
       message.addHeader();
       message.addString(value);
       message.pack();
 
       Uint8List? values = message.data;
-      final Message message2 = Message<MessageType>.fromBytes(values!);
+      final Message<MessageType> message2 = Message.fromBytes(values!);
 
       expect(value, message2.getString());
     });
