@@ -1,30 +1,29 @@
 import 'dart:typed_data';
 import 'package:messagepack/messagepack.dart';
 import 'package:netframework/src/connection.dart';
+import 'package:netframework/src/utils/utils.dart';
 
-class MessageHeader {
-  String id;
+class MessageHeader<T extends Enum> {
+  T id;
 
-  MessageHeader({this.id = ''});
+  MessageHeader({required this.id});
 }
 
-class Message {
+class Message<T extends Enum> {
   late final MessageHeader header;
   final _packer = Packer();
   final Unpacker? _unpacker;
   Uint8List? _data;
 
-  Message({MessageHeader? header, Unpacker? unpacker})
-      : _unpacker = unpacker,
-        header = header ?? MessageHeader();
+  Message({required this.header, Unpacker? unpacker}) : _unpacker = unpacker;
 
   /// Creates a new Message from a [Uint8List].
   factory Message.fromBytes(Uint8List data) {
     final Unpacker unpacker = Unpacker(data);
 
-    final id = unpacker.unpackString();
+    final id = unpacker.unpackInt();
 
-    MessageHeader header = MessageHeader(id: id!);
+    MessageHeader header = MessageHeader(id: callValuesOfEnum<T>(T)[id!]);
 
     return Message(header: header, unpacker: unpacker);
   }
@@ -41,7 +40,7 @@ class Message {
   ///
   /// It should be called before adding any data.
   void addHeader() {
-    _packer.packString(header.id.toString());
+    _packer.packInt(header.id.index);
   }
 
   /// Add an [int] to the message.
@@ -100,9 +99,9 @@ class Message {
   }
 }
 
-class OwnedMessage {
+class OwnedMessage<T extends Enum> {
   final Connection connection;
-  final Message message;
+  final Message<T> message;
 
   OwnedMessage({required this.connection, required this.message});
 }

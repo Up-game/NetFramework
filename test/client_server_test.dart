@@ -4,17 +4,22 @@ import 'package:netframework/src/message.dart';
 import 'package:netframework/src/server.dart';
 import 'package:test/test.dart';
 
-class MyClient extends Client {}
+enum Directives {
+  test,
+  other,
+}
 
-class MyServer extends Server {
+class MyClient<T extends Enum> extends Client<T> {}
+
+class MyServer<T extends Enum> extends Server<T> {
   MyServer(int port) : super(port);
 
-  void handleTest(Connection connection, Message message) {
+  void handleTest(Connection connection, Message<T> message) {
     int? i = message.getInt();
     String? s = message.getString();
     print("Handling message: $i, $s");
 
-    Message response = Message(header: MessageHeader(id: "response"));
+    Message<T> response = Message(header: MessageHeader(id: Directives.other));
     response.addHeader();
     response.addString(s!);
 
@@ -22,10 +27,10 @@ class MyServer extends Server {
   }
 
   @override
-  void onMessage(Connection connection, Message message) {
+  void onMessage(Connection connection, Message<T> message) {
     print("Server received message: $message");
     switch (message.header.id) {
-      case 'test':
+      case Directives.test:
         handleTest(connection, message);
     }
   }
@@ -34,13 +39,13 @@ class MyServer extends Server {
 void main() {
   group('Server and client test', () {
     test('Send data from client to server', () async {
-      MyServer server = MyServer(6000);
+      MyServer server = MyServer<Directives>(6000);
       await server.start();
 
-      MyClient client = MyClient();
+      MyClient client = MyClient<Directives>();
       await client.connect('localhost', 6000);
 
-      Message m = Message(header: MessageHeader(id: 'test'));
+      Message m = Message(header: MessageHeader(id: Directives.test));
       m.addHeader();
       m.addInt(10);
       m.addString('Hello world');

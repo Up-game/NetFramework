@@ -12,7 +12,7 @@ class TestClass<T extends Enum> {
   TestClass(this.id);
 
   T func() {
-    return callValuesOfEnum(id)[id.index];
+    return callValuesOfEnum<T>(T)[id.index];
   }
 }
 

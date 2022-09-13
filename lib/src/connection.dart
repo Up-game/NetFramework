@@ -6,12 +6,12 @@ import 'message.dart';
 
 enum ConnectionOwner { server, client }
 
-class Connection {
+class Connection<T extends Enum> {
   static int idCounter = 0;
   final int id;
   final ConnectionOwner owner;
   final Socket _socket;
-  final Queue<OwnedMessage> _messagesQueueIn;
+  final Queue<OwnedMessage<T>> _messagesQueueIn;
   final void Function(Connection)? _onDoneCallback;
   final void Function(Connection, Object)? _onErrorCallback;
   bool _isOpen = true;
@@ -21,7 +21,7 @@ class Connection {
   Connection({
     required this.owner,
     required Socket socket,
-    required Queue<OwnedMessage> messagesQueueIn,
+    required Queue<OwnedMessage<T>> messagesQueueIn,
     void Function(Connection)? onDoneCallback,
     void Function(Connection, Object)? onErrorCallback,
   })  : id = idCounter++,
@@ -34,9 +34,9 @@ class Connection {
 
   void _onEvent(Uint8List data) {
     print("Event received: ${data.length} bytes");
-    final message = Message.fromBytes(data);
+    final message = Message<T>.fromBytes(data);
 
-    final ownedMessage = OwnedMessage(connection: this, message: message);
+    final ownedMessage = OwnedMessage<T>(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
   }
 
@@ -56,7 +56,7 @@ class Connection {
     _socket.close();
   }
 
-  void send(Message message) {
+  void send(Message<T> message) {
     message.pack();
     _socket.add(message.data!);
   }

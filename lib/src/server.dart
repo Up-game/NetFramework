@@ -6,8 +6,8 @@ import 'message.dart';
 
 const int intMax = 9223372036854775807;
 
-abstract class Server {
-  final Queue<OwnedMessage> _messagesQueueIn = Queue();
+abstract class Server<T extends Enum> {
+  final Queue<OwnedMessage<T>> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
 
@@ -32,20 +32,20 @@ abstract class Server {
 
   void update({int numberOfMessageToRead = intMax}) {
     while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
-      final OwnedMessage message = _messagesQueueIn.removeFirst();
+      final OwnedMessage<T> message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
     }
   }
 
   /// Send a [message] to a [connection].
-  void sendToClient(Connection connection, Message message) {
+  void sendToClient(Connection connection, Message<T> message) {
     if (connection.isOpen) {
       connection.send(message);
     }
   }
 
   /// Send a [message] to all connected clients.
-  void sendToAllClients(Message message) {
+  void sendToAllClients(Message<T> message) {
     for (final connection in _connections) {
       if (connection.isOpen) {
         connection.send(message);
@@ -97,7 +97,7 @@ abstract class Server {
   }
 
   /// Called when a message is received from a connection.
-  void onMessage(Connection connection, Message message) {
+  void onMessage(Connection connection, Message<T> message) {
     print("Message received.");
   }
 

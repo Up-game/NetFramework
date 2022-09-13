@@ -5,13 +5,13 @@ import 'package:netframework/src/message.dart';
 
 import 'connection.dart';
 
-abstract class Client {
+abstract class Client<T extends Enum> {
   Connection? _connection;
-  final Queue<OwnedMessage> _messagesQueueIn;
+  final Queue<OwnedMessage<T>> _messagesQueueIn;
 
-  Client() : _messagesQueueIn = Queue<OwnedMessage>();
+  Client() : _messagesQueueIn = Queue<OwnedMessage<T>>();
 
-  Queue<OwnedMessage> get incoming => _messagesQueueIn;
+  Queue<OwnedMessage<T>> get incoming => _messagesQueueIn;
   Connection? get connection => _connection;
 
   /// Connect to the server with an [ip] and a [port].
