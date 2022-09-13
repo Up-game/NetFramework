@@ -12,6 +12,7 @@ abstract class Client {
   Client() : _messagesQueueIn = Queue<OwnedMessage>();
 
   Queue<OwnedMessage> get incoming => _messagesQueueIn;
+  Connection? get connection => _connection;
 
   Future<void> connect(String ip, int port) async {
     final socket = await Socket.connect(ip, port);

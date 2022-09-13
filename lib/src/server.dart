@@ -22,13 +22,34 @@ abstract class Server {
   }
 
   Future<void> stop() async {
-    _serverSocket?.close();
+    for (var conn in _connections) {
+      conn.close();
+    }
+    _connections.clear();
+    await _serverSocket?.close();
+    onServerSttopped();
   }
 
   void update({int messageNumber = intMax}) {
     while (_messagesQueueIn.isNotEmpty) {
       final OwnedMessage message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
+    }
+  }
+
+  void sendToClient(Connection connection, Message message) {
+    connection.send(message);
+  }
+
+  void sendToAllClients(Message message) {
+    for (final connection in _connections) {
+      if (!connection.isOpen) {
+        onClientDisconnected(connection);
+        _connections.remove(connection);
+        return;
+      }
+
+      connection.send(message);
     }
   }
 
@@ -65,11 +86,19 @@ abstract class Server {
     print("Message received.");
   }
 
+  void onServerSttopped() {
+    print("Server stopped.");
+  }
+
   /// Called when a client connects to the server.
   ///
   /// Return false to deny the connection.
   bool onClientConnected(Connection connection) {
     print("Client connected.");
     return true;
+  }
+
+  void onClientDisconnected(Connection connection) {
+    print("Client disconnected.");
   }
 }

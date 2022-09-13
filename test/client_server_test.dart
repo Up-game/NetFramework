@@ -12,13 +12,13 @@ class MyServer extends Server {
   void handleTest(Connection connection, Message message) {
     int? i = message.getInt();
     String? s = message.getString();
-    print("Server received: $i, $s");
+    print("Handling message: $i, $s");
 
     Message response = Message(header: MessageHeader(id: "response"));
     response.addHeader();
     response.addString(s!);
 
-    connection.send(response);
+    sendToClient(connection, message);
   }
 
   @override
@@ -59,7 +59,7 @@ void main() {
           break;
         }
 
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(Duration(milliseconds: 500));
       }
       await client.disconnect();
       await server.stop();

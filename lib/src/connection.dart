@@ -50,6 +50,7 @@ class Connection {
   }
 
   Future<void> close() async {
+    _isOpen = false;
     await _socket.flush();
     await _socket.close();
   }
