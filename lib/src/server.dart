@@ -6,8 +6,8 @@ import 'message.dart';
 
 const int intMax = 9223372036854775807;
 
-abstract class Server {
-  final Queue<OwnedMessage> _messagesQueueIn = Queue();
+abstract class Server<T extends Enum> {
+  final Queue<OwnedMessage<T>> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
 
@@ -22,26 +22,67 @@ abstract class Server {
   }
 
   Future<void> stop() async {
-    _serverSocket?.close();
+    for (var conn in _connections) {
+      conn.close();
+    }
+    _connections.clear();
+    await _serverSocket?.close();
+    onServerSttopped();
   }
 
-  void update({int messageNumber = intMax}) {
-    while (_messagesQueueIn.isNotEmpty) {
-      final OwnedMessage message = _messagesQueueIn.removeFirst();
+  void update({int numberOfMessageToRead = intMax}) {
+    while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
+      final OwnedMessage<T> message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
     }
   }
 
-  void onMessage(Connection connection, Message message) {}
+  /// Send a [message] to a [connection].
+  void sendToClient(Connection connection, Message<T> message) {
+    if (connection.isOpen) {
+      connection.send(message);
+    }
+  }
 
-  void _onDone() {}
+  /// Send a [message] to all connected clients.
+  void sendToAllClients(Message<T> message) {
+    for (final connection in _connections) {
+      if (connection.isOpen) {
+        connection.send(message);
+      }
+    }
+  }
 
-  void _onError(Object error) {}
+  /// Called when the serverSocket is done.
+  void _onDone() {
+    _serverSocket?.close();
+  }
 
+  /// Called when the serverSocket has an error.
+  void _onError(Object error) {
+    _serverSocket?.close();
+  }
+
+  /// Called when a new connection is established.
   void _handleConnection(Socket socket) {
+    // This function remove the connection from the list of connections when it is closed.
+    void cleanConnection(Connection connection) {
+      onClientDisconnected(connection);
+      _connections.remove(connection);
+    }
+
     //Create a connection
-    final connection =
-        Connection(socket: socket, messagesQueueIn: _messagesQueueIn);
+    final connection = Connection(
+      owner: ConnectionOwner.server,
+      socket: socket,
+      messagesQueueIn: _messagesQueueIn,
+      onDoneCallback: (Connection connection) {
+        cleanConnection(connection);
+      },
+      onErrorCallback: (Connection connection, Object error) {
+        cleanConnection(connection);
+      },
+    );
 
     // Give a chance to deny the connection
     if (!onClientConnected(connection)) {
@@ -55,7 +96,24 @@ abstract class Server {
     print("Connection accepted.");
   }
 
+  /// Called when a message is received from a connection.
+  void onMessage(Connection connection, Message<T> message) {
+    print("Message received.");
+  }
+
+  void onServerSttopped() {
+    print("Server stopped.");
+  }
+
+  /// Called when a client connects to the server.
+  ///
+  /// Return false to deny the connection.
   bool onClientConnected(Connection connection) {
+    print("Client ${connection.id} connected.");
     return true;
+  }
+
+  void onClientDisconnected(Connection connection) {
+    print("Client ${connection.id} disconnected.");
   }
 }

@@ -4,29 +4,38 @@ import 'package:netframework/src/message.dart';
 import 'package:netframework/src/server.dart';
 import 'package:test/test.dart';
 
-class MyClient extends Client {}
+enum Directives {
+  test,
+  other,
+}
 
-class MyServer extends Server {
+class MyClient extends Client<Directives> {}
+
+class MyServer extends Server<Directives> {
   MyServer(int port) : super(port);
 
-  void handleTest(Connection connection, Message message) {
+  void handleTest(Connection connection, Message<Directives> message) {
     int? i = message.getInt();
     String? s = message.getString();
-    print("Server received: $i, $s");
+    print("Handling message: $i, $s");
 
-    Message response = Message(header: MessageHeader(id: "response"));
+    Message<Directives> response =
+        Message(header: MessageHeader(id: Directives.other));
     response.addHeader();
     response.addString(s!);
 
-    connection.send(response);
+    sendToClient(connection, message);
   }
 
   @override
-  void onMessage(Connection connection, Message message) {
+  void onMessage(Connection connection, Message<Directives> message) {
     print("Server received message: $message");
     switch (message.header.id) {
-      case 'test':
+      case Directives.test:
         handleTest(connection, message);
+        break;
+      case Directives.other:
+        break;
     }
   }
 }
@@ -40,7 +49,8 @@ void main() {
       MyClient client = MyClient();
       await client.connect('localhost', 6000);
 
-      Message m = Message(header: MessageHeader(id: 'test'));
+      Message<Directives> m =
+          Message(header: MessageHeader(id: Directives.test));
       m.addHeader();
       m.addInt(10);
       m.addString('Hello world');
@@ -59,9 +69,10 @@ void main() {
           break;
         }
 
-        await Future.delayed(Duration(seconds: 1));
+        await Future.delayed(Duration(milliseconds: 500));
       }
       await client.disconnect();
+      await Future.delayed(Duration(milliseconds: 500));
       await server.stop();
     });
   });
