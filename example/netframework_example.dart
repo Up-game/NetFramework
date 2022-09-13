@@ -1,63 +1,74 @@
 import 'package:netframework/netframework.dart';
 
 enum Directives {
-  test,
+  ping,
   other,
 }
 
-class MyClient<T extends Enum> extends Client<T> {}
+class MyClient extends Client<Directives> {
+  void ping() {
+    Message<Directives> m = Message(header: MessageHeader(id: Directives.ping));
+    m.addHeader();
+    m.addString(DateTime.now().toIso8601String());
+    print("ping");
+    send(m);
+  }
+}
 
-class MyServer<T extends Enum> extends Server<T> {
+class MyServer extends Server<Directives> {
   MyServer(int port) : super(port);
 
-  void handleTest(Connection connection, Message<T> message) {
-    int? i = message.getInt();
-    String? s = message.getString();
-    print("Handling message: $i, $s");
+  void handlePing(Connection connection, Message<Directives> message) {
+    final time = message.getString();
 
-    Message<T> response = Message(header: MessageHeader(id: Directives.other));
+    Message<Directives> response =
+        Message(header: MessageHeader(id: Directives.ping));
     response.addHeader();
-    response.addString(s!);
+    response.addString(time!);
 
-    sendToClient(connection, message);
+    sendToClient(connection, response);
   }
 
   @override
-  void onMessage(Connection connection, Message<T> message) {
+  void onMessage(Connection connection, Message<Directives> message) {
     print("Server received message: $message");
     switch (message.header.id) {
-      case Directives.test:
-        handleTest(connection, message);
+      case Directives.ping:
+        handlePing(connection, message);
+        break;
+      case Directives.other:
+        break;
     }
   }
 }
 
 void main() async {
-  MyServer server = MyServer<Directives>(6000);
+  MyServer server = MyServer(6000);
   await server.start();
 
-  MyClient client = MyClient<Directives>();
+  MyClient client = MyClient();
   await client.connect('localhost', 6000);
 
-  Message m = Message(header: MessageHeader(id: Directives.test));
-  m.addHeader();
-  m.addInt(10);
-  m.addString('Hello world');
+  client.ping();
 
-  client.send(m);
-
-  for (int i = 0; i < 10; i++) {
+  while (true) {
+    // waiting otherwise the thread will be blocked.
+    await Future.delayed(Duration(milliseconds: 1));
     server.update();
 
     if (client.incoming.isNotEmpty) {
-      OwnedMessage response = client.incoming.removeFirst();
-      Message m = response.message;
-      String? s = m.getString();
-      print("Client received: $s");
+      OwnedMessage<Directives> response = client.incoming.removeFirst();
+      Message<Directives> m = response.message;
+      if (m.header.id == Directives.ping) {
+        final now = DateTime.now();
+        String? s = m.getString();
+        final old = DateTime.parse(s!);
+        final duration = now.difference(old);
+        print("Pong in ${duration.inMilliseconds}ms");
+      }
+
       break;
     }
-
-    await Future.delayed(Duration(milliseconds: 500));
   }
   await client.disconnect();
   await Future.delayed(Duration(milliseconds: 500));

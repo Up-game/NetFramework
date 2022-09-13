@@ -39,13 +39,14 @@ class MyServer<T extends Enum> extends Server<T> {
 void main() {
   group('Server and client test', () {
     test('Send data from client to server', () async {
-      MyServer server = MyServer<Directives>(6000);
+      MyServer<Directives> server = MyServer(6000);
       await server.start();
 
-      MyClient client = MyClient<Directives>();
+      MyClient<Directives> client = MyClient();
       await client.connect('localhost', 6000);
 
-      Message m = Message(header: MessageHeader(id: Directives.test));
+      Message<Directives> m =
+          Message(header: MessageHeader(id: Directives.test));
       m.addHeader();
       m.addInt(10);
       m.addString('Hello world');

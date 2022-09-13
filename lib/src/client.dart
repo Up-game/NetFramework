@@ -6,18 +6,18 @@ import 'package:netframework/src/message.dart';
 import 'connection.dart';
 
 abstract class Client<T extends Enum> {
-  Connection? _connection;
+  Connection<T>? _connection;
   final Queue<OwnedMessage<T>> _messagesQueueIn;
 
   Client() : _messagesQueueIn = Queue<OwnedMessage<T>>();
 
   Queue<OwnedMessage<T>> get incoming => _messagesQueueIn;
-  Connection? get connection => _connection;
+  Connection<T>? get connection => _connection;
 
   /// Connect to the server with an [ip] and a [port].
   Future<void> connect(String ip, int port) async {
     final socket = await Socket.connect(ip, port);
-    _connection = Connection(
+    _connection = Connection<T>(
       owner: ConnectionOwner.client,
       socket: socket,
       messagesQueueIn: _messagesQueueIn,
@@ -30,7 +30,7 @@ abstract class Client<T extends Enum> {
   }
 
   /// Send a [message] to the server.
-  void send(Message message) {
+  void send(Message<T> message) {
     assert(_connection != null, "Connect first before sending messages");
     message.pack();
     _connection!.send(message);

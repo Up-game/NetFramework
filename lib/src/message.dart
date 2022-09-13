@@ -10,7 +10,7 @@ class MessageHeader<T extends Enum> {
 }
 
 class Message<T extends Enum> {
-  late final MessageHeader header;
+  late final MessageHeader<T> header;
   final _packer = Packer();
   final Unpacker? _unpacker;
   Uint8List? _data;
@@ -23,9 +23,9 @@ class Message<T extends Enum> {
 
     final id = unpacker.unpackInt();
 
-    MessageHeader header = MessageHeader(id: callValuesOfEnum<T>(T)[id!]);
+    MessageHeader<T> header = MessageHeader(id: callValuesOfEnum<T>(T)[id!]);
 
-    return Message(header: header, unpacker: unpacker);
+    return Message<T>(header: header, unpacker: unpacker);
   }
 
   /// Get the data as a [Uint8List].
