@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:netframework/netframework.dart';
 
 enum Directives {
@@ -46,16 +48,24 @@ void main() async {
   MyServer server = MyServer(6000);
   await server.start();
 
+  await Isolate.spawn(startClient, null);
+
+  for (int i = 0; i < 1000; i++) {
+    await Future.delayed(Duration(milliseconds: 1));
+    server.update();
+  }
+
+  await server.stop();
+}
+
+void startClient(int? _) async {
   MyClient client = MyClient();
   await client.connect('localhost', 6000);
 
   client.ping();
 
   while (true) {
-    // waiting otherwise the thread will be blocked.
     await Future.delayed(Duration(milliseconds: 1));
-    server.update();
-
     if (client.incoming.isNotEmpty) {
       OwnedMessage<Directives> response = client.incoming.removeFirst();
       Message<Directives> m = response.message;
@@ -71,6 +81,4 @@ void main() async {
     }
   }
   await client.disconnect();
-  await Future.delayed(Duration(milliseconds: 500));
-  await server.stop();
 }

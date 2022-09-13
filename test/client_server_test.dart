@@ -9,17 +9,18 @@ enum Directives {
   other,
 }
 
-class MyClient<T extends Enum> extends Client<T> {}
+class MyClient extends Client<Directives> {}
 
-class MyServer<T extends Enum> extends Server<T> {
+class MyServer extends Server<Directives> {
   MyServer(int port) : super(port);
 
-  void handleTest(Connection connection, Message<T> message) {
+  void handleTest(Connection connection, Message<Directives> message) {
     int? i = message.getInt();
     String? s = message.getString();
     print("Handling message: $i, $s");
 
-    Message<T> response = Message(header: MessageHeader(id: Directives.other));
+    Message<Directives> response =
+        Message(header: MessageHeader(id: Directives.other));
     response.addHeader();
     response.addString(s!);
 
@@ -27,11 +28,14 @@ class MyServer<T extends Enum> extends Server<T> {
   }
 
   @override
-  void onMessage(Connection connection, Message<T> message) {
+  void onMessage(Connection connection, Message<Directives> message) {
     print("Server received message: $message");
     switch (message.header.id) {
       case Directives.test:
         handleTest(connection, message);
+        break;
+      case Directives.other:
+        break;
     }
   }
 }
@@ -39,10 +43,10 @@ class MyServer<T extends Enum> extends Server<T> {
 void main() {
   group('Server and client test', () {
     test('Send data from client to server', () async {
-      MyServer<Directives> server = MyServer(6000);
+      MyServer server = MyServer(6000);
       await server.start();
 
-      MyClient<Directives> client = MyClient();
+      MyClient client = MyClient();
       await client.connect('localhost', 6000);
 
       Message<Directives> m =

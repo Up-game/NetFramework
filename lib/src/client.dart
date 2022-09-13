@@ -22,6 +22,12 @@ abstract class Client<T extends Enum> {
       socket: socket,
       messagesQueueIn: _messagesQueueIn,
     );
+
+    onConnected();
+  }
+
+  void onConnected() {
+    print("connected");
   }
 
   /// Disconnect from the server.
