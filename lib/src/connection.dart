@@ -7,6 +7,8 @@ import 'message.dart';
 enum ConnectionOwner { server, client }
 
 class Connection {
+  static int idCounter = 0;
+  final int id;
   final ConnectionOwner owner;
   final Socket _socket;
   final Queue<OwnedMessage> _messagesQueueIn;
@@ -18,7 +20,8 @@ class Connection {
     required this.owner,
     required Socket socket,
     required Queue<OwnedMessage> messagesQueueIn,
-  })  : _socket = socket,
+  })  : id = idCounter++,
+        _socket = socket,
         _messagesQueueIn = messagesQueueIn {
     socket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
