@@ -18,6 +18,10 @@ abstract class Client {
     _connection = Connection(socket: socket, messagesQueueIn: _messagesQueueIn);
   }
 
+  Future<void> disconnect() async {
+    await _connection?.close();
+  }
+
   void send(Message message) {
     assert(_connection != null, "Connect first before sending messages");
     message.pack();

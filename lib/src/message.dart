@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:messagepack/messagepack.dart';
 import 'package:netframework/src/connection.dart';

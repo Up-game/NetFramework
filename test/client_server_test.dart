@@ -18,7 +18,7 @@ class MyServer extends Server {
     response.addHeader();
     response.addString(s!);
 
-    connection.send(message);
+    connection.send(response);
   }
 
   @override
@@ -53,12 +53,16 @@ void main() {
         if (client.incoming.isNotEmpty) {
           OwnedMessage response = client.incoming.removeFirst();
           Message m = response.message;
-          print("Client received: ${m.getString()}");
+          String? s = m.getString();
+          print("Client received: $s");
+          expect(s, 'Hello world');
           break;
         }
 
         await Future.delayed(Duration(seconds: 1));
       }
+      await client.disconnect();
+      await server.stop();
     });
   });
 }

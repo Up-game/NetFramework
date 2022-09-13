@@ -28,10 +28,12 @@ class Connection {
 
   void _onDone() {
     _isOpen = false;
+    _socket.close();
   }
 
   void _onError(Object error) {
     _isOpen = false;
+    _socket.close();
   }
 
   void send(Message message) {
@@ -39,8 +41,8 @@ class Connection {
     _socket.add(message.data!);
   }
 
-  void close() {
-    _socket.flush();
-    _socket.close();
+  Future<void> close() async {
+    await _socket.flush();
+    await _socket.close();
   }
 }
