@@ -14,9 +14,9 @@ class Connection<T extends Enum> {
   final Socket _socket;
   final Queue<OwnedMessage<T>> _messagesQueueIn;
   final void Function(Connection)? _onDoneCallback;
-  void Function(Connection)? _onEventCallback;
+  final void Function(Connection)? _onEventCallback;
   final void Function(Connection, Object)? _onErrorCallback;
-  final StreamController<void>? _streamController;
+  final StreamController<void>? _incomingStreamController;
   bool _isOpen = true;
 
   bool get isOpen => _isOpen;
@@ -34,7 +34,7 @@ class Connection<T extends Enum> {
         _onErrorCallback = onErrorCallback,
         _onEventCallback = onEventCallback,
         _socket = socket,
-        _streamController = streamController,
+        _incomingStreamController = streamController,
         _messagesQueueIn = messagesQueueIn {
     socket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
@@ -45,7 +45,7 @@ class Connection<T extends Enum> {
 
     final ownedMessage = OwnedMessage<T>(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
-    _streamController?.sink.add(null);
+    _incomingStreamController?.sink.add(null);
     if (_onEventCallback != null) {
       _onEventCallback!(this);
     }

@@ -11,7 +11,9 @@ abstract class Server<T extends Enum> {
   final Queue<OwnedMessage<T>> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
-  final StreamController<void> _streamController = StreamController.broadcast();
+  // This StreamController is used to block the update loop.
+  final StreamController<void> _incomingStreamController =
+      StreamController.broadcast();
 
   ServerSocket? _serverSocket;
 
@@ -41,7 +43,7 @@ abstract class Server<T extends Enum> {
       {int numberOfMessageToRead = intMax, blocking = false}) async {
     if (blocking) {
       // wait for new messages
-      await _streamController.stream.first;
+      await _incomingStreamController.stream.first;
     }
 
     while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
@@ -95,7 +97,7 @@ abstract class Server<T extends Enum> {
       onErrorCallback: (Connection connection, Object error) {
         cleanConnection(connection);
       },
-      streamController: _streamController,
+      streamController: _incomingStreamController,
     );
 
     // Give a chance to deny the connection
