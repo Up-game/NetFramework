@@ -33,4 +33,14 @@ class Connection {
   void _onError(Object error) {
     _isOpen = false;
   }
+
+  void send(Message message) {
+    message.pack();
+    _socket.add(message.data!);
+  }
+
+  void close() {
+    _socket.flush();
+    _socket.close();
+  }
 }

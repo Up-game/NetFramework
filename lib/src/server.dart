@@ -4,6 +4,8 @@ import 'dart:io';
 import 'connection.dart';
 import 'message.dart';
 
+const int INT_MAX = 9223372036854775807;
+
 abstract class Server {
   final Queue<OwnedMessage> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
@@ -22,6 +24,15 @@ abstract class Server {
   Future<void> stop() async {
     _serverSocket?.close();
   }
+
+  void update({int messageNumber = INT_MAX}) {
+    while (_messagesQueueIn.isNotEmpty) {
+      final OwnedMessage message = _messagesQueueIn.removeFirst();
+      onMessage(message.connection, message.message);
+    }
+  }
+
+  void onMessage(Connection connection, Message message) {}
 
   void _onDone() {}
 
