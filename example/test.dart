@@ -1,4 +1,4 @@
-import 'dart:mirrors';
+import 'package:netframework/src/utils/utils.dart';
 
 enum Test {
   A,
@@ -6,15 +6,17 @@ enum Test {
   C;
 }
 
-void main(List<String> args) {
-  printGetterValues(reflect(Test.A));
+class TestClass<T extends Enum> {
+  T id;
+
+  TestClass(this.id);
+
+  T func() {
+    return callValuesOfEnum(id)[id.index];
+  }
 }
 
-void printGetterValues(InstanceMirror instanceMirror) {
-  var classMirror = instanceMirror.type;
-  final v = classMirror.getField(#values).reflectee;
-  print(v.toString());
-  classMirror.staticMembers.forEach((sym, met) {
-    print(sym);
-  });
+void main(List<String> args) {
+  TestClass<Test> test = TestClass(Test.A);
+  print(test.func());
 }
