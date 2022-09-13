@@ -32,16 +32,21 @@ abstract class Server {
     }
   }
 
-  void onMessage(Connection connection, Message message) {}
+  void _onDone() {
+    _serverSocket?.close();
+  }
 
-  void _onDone() {}
-
-  void _onError(Object error) {}
+  void _onError(Object error) {
+    _serverSocket?.close();
+  }
 
   void _handleConnection(Socket socket) {
     //Create a connection
-    final connection =
-        Connection(socket: socket, messagesQueueIn: _messagesQueueIn);
+    final connection = Connection(
+      owner: ConnectionOwner.server,
+      socket: socket,
+      messagesQueueIn: _messagesQueueIn,
+    );
 
     // Give a chance to deny the connection
     if (!onClientConnected(connection)) {
@@ -55,7 +60,16 @@ abstract class Server {
     print("Connection accepted.");
   }
 
+  /// Called when a message is received from a connection.
+  void onMessage(Connection connection, Message message) {
+    print("Message received.");
+  }
+
+  /// Called when a client connects to the server.
+  ///
+  /// Return false to deny the connection.
   bool onClientConnected(Connection connection) {
+    print("Client connected.");
     return true;
   }
 }

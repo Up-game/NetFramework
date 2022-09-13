@@ -4,16 +4,21 @@ import 'dart:typed_data';
 
 import 'message.dart';
 
+enum ConnectionOwner { server, client }
+
 class Connection {
+  final ConnectionOwner owner;
   final Socket _socket;
-  bool _isOpen = true;
   final Queue<OwnedMessage> _messagesQueueIn;
+  bool _isOpen = true;
 
   bool get isOpen => _isOpen;
 
-  Connection(
-      {required Socket socket, required Queue<OwnedMessage> messagesQueueIn})
-      : _socket = socket,
+  Connection({
+    required this.owner,
+    required Socket socket,
+    required Queue<OwnedMessage> messagesQueueIn,
+  })  : _socket = socket,
         _messagesQueueIn = messagesQueueIn {
     socket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
@@ -44,5 +49,10 @@ class Connection {
   Future<void> close() async {
     await _socket.flush();
     await _socket.close();
+  }
+
+  @override
+  String toString() {
+    return 'Connection{owner: $owner, messagesQueueInSize: ${_messagesQueueIn.length}}';
   }
 }

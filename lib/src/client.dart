@@ -15,7 +15,11 @@ abstract class Client {
 
   Future<void> connect(String ip, int port) async {
     final socket = await Socket.connect(ip, port);
-    _connection = Connection(socket: socket, messagesQueueIn: _messagesQueueIn);
+    _connection = Connection(
+      owner: ConnectionOwner.client,
+      socket: socket,
+      messagesQueueIn: _messagesQueueIn,
+    );
   }
 
   Future<void> disconnect() async {
