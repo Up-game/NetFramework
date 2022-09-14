@@ -49,6 +49,7 @@ abstract class Server {
       conn.close();
     }
     _connections.clear();
+    _incomingStreamController.sink.add(null);
     await _serverSocket?.close();
     _printer?.call(
       LogLevel.info,
@@ -56,7 +57,7 @@ abstract class Server {
       'Server stopped.',
     );
     _isRunning = false;
-    _incomingStreamController.sink.add(null);
+    _incomingStreamController.close();
     onServerStopped();
   }
 
