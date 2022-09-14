@@ -69,7 +69,6 @@ class Connection<T extends Enum> {
       final data = await _multiSubSocket.first;
       if (digest.toString() == String.fromCharCodes(data)) {
         print('[$owner]Handshake success');
-        _multiSubSocket.listen(_onEvent, onDone: _onDone, onError: _onError);
         return true;
       } else {
         print('[$owner]Handshake failed');
