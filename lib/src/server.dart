@@ -56,6 +56,7 @@ abstract class Server {
       'Server stopped.',
     );
     _isRunning = false;
+    _incomingStreamController.sink.add(null);
     onServerStopped();
   }
 
@@ -101,7 +102,6 @@ abstract class Server {
   /// Called when the serverSocket has an error.
   void _onError(Object error) {
     _serverSocket?.close();
-    _isRunning = false;
   }
 
   /// Called when a new connection is established.
