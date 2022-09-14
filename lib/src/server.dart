@@ -31,6 +31,11 @@ abstract class Server {
     } catch (e) {
       throw ServerBindingException();
     }
+    _printer?.call(
+      LogLevel.info,
+      LogActor.server,
+      'Server started on port $port',
+    );
     _serverSocket!
         .listen(_handleConnection, onDone: _onDone, onError: _onError);
   }
