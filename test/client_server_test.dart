@@ -11,9 +11,9 @@ enum Directives {
   other,
 }
 
-class MyClient extends Client<Directives> {
+class MyClient extends Client {
   void sendHelloWolrd() {
-    Message<Directives> m = Message(header: MessageHeader(id: Directives.test));
+    Message m = Message(header: MessageHeader(id: Directives.test.index));
     m.addHeader();
     m.addString('Hello world');
     print("[MyClient]Say hello world");
@@ -21,15 +21,15 @@ class MyClient extends Client<Directives> {
   }
 }
 
-class MyServer extends Server<Directives> {
+class MyServer extends Server {
   MyServer(int port) : super(port);
 
-  void handleTest(Connection connection, Message<Directives> message) {
+  void handleTest(Connection connection, Message message) {
     String? s = message.getString();
     print("[MyServer]Handling message: $s");
 
-    Message<Directives> response =
-        Message(header: MessageHeader(id: Directives.test));
+    Message response =
+        Message(header: MessageHeader(id: Directives.test.index));
     response.addHeader();
     response.addString(s!);
 
@@ -38,9 +38,9 @@ class MyServer extends Server<Directives> {
   }
 
   @override
-  void onMessage(Connection connection, Message<Directives> message) {
+  void onMessage(Connection connection, Message message) {
     print("[MyServer]Server received message: $message");
-    switch (message.header.id) {
+    switch (Directives.values[message.header.id]) {
       case Directives.test:
         handleTest(connection, message);
         break;
