@@ -89,6 +89,7 @@ class Connection<T extends Enum> {
 
   void startListening() {
     assert(_isOpen == true);
+    print("[$owner]start listening");
     _multiSubSocket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
 
@@ -98,7 +99,11 @@ class Connection<T extends Enum> {
 
     final ownedMessage = OwnedMessage<T>(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
+
+    // this will be called only by the server.
+    // It will notify the update method that there is a new message.
     _incomingStreamController?.sink.add(null);
+
     if (_onEventCallback != null) {
       _onEventCallback!(this);
     }

@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:isolate';
 
 import 'package:netframework/src/client.dart';
 import 'package:netframework/src/connection.dart';
@@ -16,7 +16,7 @@ class MyClient extends Client<Directives> {
     Message<Directives> m = Message(header: MessageHeader(id: Directives.test));
     m.addHeader();
     m.addString('Hello world');
-
+    print("[MyClient]Say hello world");
     send(m);
   }
 }
@@ -29,11 +29,12 @@ class MyServer extends Server<Directives> {
     print("[MyServer]Handling message: $s");
 
     Message<Directives> response =
-        Message(header: MessageHeader(id: Directives.other));
+        Message(header: MessageHeader(id: Directives.test));
     response.addHeader();
     response.addString(s!);
 
-    sendToClient(connection, message);
+    print("[MyServer]Message sent.");
+    sendToClient(connection, response);
   }
 
   @override
@@ -49,41 +50,48 @@ class MyServer extends Server<Directives> {
   }
 }
 
-void main() {
+void main() async {
   group('Server and client test', () {
     test('Send data from client to server', () async {
-      MyServer server = MyServer(6000);
-      await server.start();
-      await Future.delayed(Duration(milliseconds: 1000));
+      final rp = ReceivePort();
+      await Isolate.spawn(startServer, rp.sendPort);
+      final SendPort sp = await rp.first;
 
       MyClient client = MyClient();
       await client.connect('localhost', 6000);
-
-      await Future.delayed(Duration(milliseconds: 1000));
-
-      print("TAILLE:" + server.incoming.length.toString());
-
-      client.sendHelloWolrd();
-      client.sendHelloWolrd();
-      client.sendHelloWolrd();
       client.sendHelloWolrd();
 
       while (true) {
-        server.update(blocking: false);
+        await Future.delayed(Duration(milliseconds: 1));
         if (client.incoming.isNotEmpty) {
           OwnedMessage response = client.incoming.removeFirst();
           Message m = response.message;
           String? s = m.getString();
-          print("Client received: $s");
+          print("[Client]Received: $s");
+          await client.disconnect();
+          sp.send(null);
           expect(s, 'Hello world');
           break;
         }
-
-        await Future.delayed(Duration(milliseconds: 500));
       }
-      await client.disconnect();
-      await Future.delayed(Duration(milliseconds: 500));
-      await server.stop();
     });
   });
+}
+
+void startServer(SendPort sp) async {
+  final rp = ReceivePort();
+
+  MyServer server = MyServer(6000);
+  await server.start();
+  print("[Server]Started.");
+  sp.send(rp.sendPort);
+
+  rp.listen((message) async {
+    await server.stop();
+    Isolate.exit();
+  });
+
+  while (true) {
+    await server.update(blocking: true);
+  }
 }
