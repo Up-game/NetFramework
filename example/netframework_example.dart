@@ -84,9 +84,15 @@ void main() async {
 
 void startServer(SendPort sp) async {
   final rp = ReceivePort();
+  MyServer server;
+  try {
+    server = MyServer(6000);
+    await server.start();
+  } catch (e) {
+    print(e);
+    exit(1);
+  }
 
-  MyServer server = MyServer(6000);
-  await server.start();
   print("[Server]Started.");
   sp.send(rp.sendPort);
 
