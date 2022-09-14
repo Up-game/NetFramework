@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
+import 'package:netframework/src/exceptions.dart';
+
 import 'connection.dart';
 import 'message.dart';
 
@@ -22,7 +24,11 @@ abstract class Server<T extends Enum> {
   Queue<OwnedMessage<T>> get incoming => _messagesQueueIn;
 
   Future<void> start() async {
-    _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    try {
+      _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
+    } catch (e) {
+      throw ServerBindingException();
+    }
     _serverSocket!
         .listen(_handleConnection, onDone: _onDone, onError: _onError);
   }

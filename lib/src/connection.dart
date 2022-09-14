@@ -66,8 +66,16 @@ class Connection<T extends Enum> {
       _socket.write(randomString);
       var bytes = utf8.encode(randomString);
       var digest = hmacSha256.convert(bytes);
+      late final Uint8List data;
+      try {
+        data = await _multiSubSocket.first;
+      } catch (e) {
+        print('[$owner]Handshake failed');
+        _isOpen = false;
+        _socket.close();
+        return false;
+      }
 
-      final data = await _multiSubSocket.first;
       if (digest.toString() == String.fromCharCodes(data)) {
         print('[$owner]Handshake success');
         return true;
