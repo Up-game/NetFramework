@@ -55,6 +55,7 @@ void main() async {
     test('Send data from client to server', () async {
       final rp = ReceivePort();
       await Isolate.spawn(startServer, rp.sendPort);
+      // wait for server to start and send port
       final SendPort sp = await rp.first;
 
       MyClient client = MyClient();
