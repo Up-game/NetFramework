@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'message.dart';
+import 'utils/utils.dart';
 
 enum ConnectionOwner {
   server,
@@ -61,7 +62,7 @@ class Connection<T extends Enum> {
     var hmacSha256 = Hmac(sha256, secret);
 
     if (owner == ConnectionOwner.server) {
-      final String randomString = "RandomString";
+      final String randomString = generateRandomString(20);
       _socket.write(randomString);
       var bytes = utf8.encode(randomString);
       var digest = hmacSha256.convert(bytes);
