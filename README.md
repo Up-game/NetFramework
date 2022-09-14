@@ -11,6 +11,8 @@ and the Flutter guide for
 [developing packages and plugins](https://flutter.dev/developing-packages). 
 -->
 
+[![Build Status](https://github.com/dart-lang/cli_util/workflows/Dart/badge.svg)](https://github.com/dart-lang/cli_util/actions)
+
 TODO: Put a short description of the package here that helps potential users
 know whether this package might be useful for them.
 
