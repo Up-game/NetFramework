@@ -9,6 +9,10 @@ enum Directives {
 }
 
 class MyClient extends Client {
+  MyClient()
+      : super(printer: (LogLevel level, LogActor actor, String mess) {
+          print('[$level][$actor] $mess');
+        });
   void ping() {
     Message m = Message(header: MessageHeader(id: Directives.ping.index));
     m.addHeader();

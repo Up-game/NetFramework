@@ -2,14 +2,18 @@ import 'dart:collection';
 import 'dart:io';
 
 import 'package:netframework/src/message.dart';
+import 'package:netframework/src/utils/log.dart';
 
 import 'connection.dart';
 
 abstract class Client {
   Connection? _connection;
   final Queue<OwnedMessage> _messagesQueueIn;
+  final Printer? _printer;
 
-  Client() : _messagesQueueIn = Queue<OwnedMessage>();
+  Client({Printer? printer})
+      : _printer = printer,
+        _messagesQueueIn = Queue<OwnedMessage>();
 
   Queue<OwnedMessage> get incoming => _messagesQueueIn;
   Connection? get connection => _connection;
@@ -23,30 +27,30 @@ abstract class Client {
       messagesQueueIn: _messagesQueueIn,
       onDoneCallback: onDone,
       onErrorCallback: onError,
+      printer: _printer,
     );
 
     bool handshakeOk = await _connection!.handshake();
     if (!handshakeOk) return false;
     _connection!.startListening();
 
+    _printer?.call(
+      LogLevel.info,
+      LogActor.client,
+      'Connected to the server',
+    );
     onConnected();
     return true;
   }
 
   /// Called when the connection is established.
-  void onConnected() {
-    print("[CLIENT]connected");
-  }
+  void onConnected() {}
 
   /// Called when the connection is closed.
-  void onDone(Connection connection) {
-    print("[CLIENT]done");
-  }
+  void onDone(Connection connection) {}
 
   /// Called when the connection is closed.
-  void onError(Connection connection, Object error) {
-    print("[CLIENT]error: $error");
-  }
+  void onError(Connection connection, Object error) {}
 
   /// called when a message is received.
   ///

@@ -6,6 +6,7 @@ import 'package:netframework/src/exceptions.dart';
 
 import 'connection.dart';
 import 'message.dart';
+import 'utils/log.dart';
 
 const int intMax = 9223372036854775807;
 
@@ -13,13 +14,14 @@ abstract class Server {
   final Queue<OwnedMessage> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
+  final Printer? _printer;
   // This StreamController is used to block the update loop.
   final StreamController<void> _incomingStreamController =
       StreamController.broadcast();
 
   ServerSocket? _serverSocket;
 
-  Server(this.port);
+  Server(this.port, {Printer? printer}) : _printer = printer;
 
   Queue<OwnedMessage> get incoming => _messagesQueueIn;
 
@@ -39,6 +41,11 @@ abstract class Server {
     }
     _connections.clear();
     await _serverSocket?.close();
+    _printer?.call(
+      LogLevel.info,
+      LogActor.server,
+      'Server stopped.',
+    );
     onServerStopped();
   }
 
@@ -55,7 +62,6 @@ abstract class Server {
     }
 
     while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
-      print(_messagesQueueIn.length);
       final OwnedMessage message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
     }
@@ -93,6 +99,11 @@ abstract class Server {
     void cleanConnection(Connection connection) {
       onClientDisconnected(connection);
       _connections.remove(connection);
+      _printer?.call(
+        LogLevel.info,
+        LogActor.server,
+        'Client ${connection.id} disconnected.',
+      );
     }
 
     //Create a connection
@@ -109,6 +120,12 @@ abstract class Server {
       streamController: _incomingStreamController,
     );
 
+    _printer?.call(
+      LogLevel.info,
+      LogActor.server,
+      'Client ${connection.id} connected.',
+    );
+
     // Give a chance to deny the connection
     if (!onClientConnected(connection)) return;
 
@@ -118,27 +135,24 @@ abstract class Server {
     _connections.add(connection);
     connection.startListening();
 
-    print("[SERVER]Connection accepted.");
+    _printer?.call(
+      LogLevel.info,
+      LogActor.server,
+      'Connection from ${connection.socket.remoteAddress.address}:${connection.socket.remotePort} accepted',
+    );
   }
 
   /// Called when a message is received from a connection.
-  void onMessage(Connection connection, Message message) {
-    print("[SERVER]Message received.");
-  }
+  void onMessage(Connection connection, Message message) {}
 
-  void onServerStopped() {
-    print("[SERVER]Server stopped.");
-  }
+  void onServerStopped() {}
 
   /// Called when a client connects to the server.
   ///
   /// Return false to deny the connection.
   bool onClientConnected(Connection connection) {
-    print("[SERVER]Client ${connection.id} connected.");
     return true;
   }
 
-  void onClientDisconnected(Connection connection) {
-    print("[SERVER]Client ${connection.id} disconnected.");
-  }
+  void onClientDisconnected(Connection connection) {}
 }

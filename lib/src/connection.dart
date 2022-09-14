@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
+import 'package:netframework/src/utils/log.dart';
 import 'message.dart';
 import 'utils/utils.dart';
 
@@ -33,11 +34,13 @@ class Connection {
   final void Function(Connection, Object)? _onErrorCallback;
   final StreamController<void>? _incomingStreamController;
   bool _isOpen = true;
+  final Printer? _printer;
 
   /// This is used to be able to subscribe multiple times to the same stream.
   late Stream<Uint8List> _multiSubSocket;
 
   bool get isOpen => _isOpen;
+  Socket get socket => _socket;
 
   Connection({
     required this.owner,
@@ -47,7 +50,9 @@ class Connection {
     void Function(Connection)? onEventCallback,
     void Function(Connection, Object)? onErrorCallback,
     StreamController<void>? streamController,
+    Printer? printer,
   })  : id = idCounter++,
+        _printer = printer,
         _onDoneCallback = onDoneCallback,
         _onErrorCallback = onErrorCallback,
         _onEventCallback = onEventCallback,
@@ -70,17 +75,17 @@ class Connection {
       try {
         data = await _multiSubSocket.first;
       } catch (e) {
-        print('[$owner]Handshake failed');
+        _printer?.call(LogLevel.error, LogActor.server, 'Handshake failed');
         _isOpen = false;
         _socket.close();
         return false;
       }
 
       if (digest.toString() == String.fromCharCodes(data)) {
-        print('[$owner]Handshake success');
+        _printer?.call(LogLevel.info, LogActor.server, 'Handshake success');
         return true;
       } else {
-        print('[$owner]Handshake failed');
+        _printer?.call(LogLevel.error, LogActor.server, 'Handshake failed');
         _isOpen = false;
         _socket.close();
         return false;
@@ -98,12 +103,20 @@ class Connection {
 
   void startListening() {
     assert(_isOpen == true);
-    print("[$owner]start listening");
+    _printer?.call(
+      LogLevel.info,
+      owner == ConnectionOwner.server ? LogActor.server : LogActor.server,
+      'Start listening',
+    );
     _multiSubSocket.listen(_onEvent, onDone: _onDone, onError: _onError);
   }
 
   void _onEvent(Uint8List data) {
-    print("[$owner]received event: ${data.length} bytes");
+    _printer?.call(
+      LogLevel.info,
+      owner == ConnectionOwner.server ? LogActor.server : LogActor.client,
+      'Received event: ${data.length} bytes',
+    );
     final message = Message.fromBytes(data);
 
     final ownedMessage = OwnedMessage(connection: this, message: message);
@@ -124,6 +137,11 @@ class Connection {
     }
     _isOpen = false;
     _socket.close();
+    _printer?.call(
+      LogLevel.info,
+      owner == ConnectionOwner.server ? LogActor.server : LogActor.client,
+      'Connection closed',
+    );
   }
 
   void _onError(Object error) {
@@ -132,6 +150,11 @@ class Connection {
     }
     _isOpen = false;
     _socket.close();
+    _printer?.call(
+      LogLevel.error,
+      owner == ConnectionOwner.server ? LogActor.server : LogActor.client,
+      'Error: $error',
+    );
   }
 
   void send(Message message) {
@@ -143,6 +166,11 @@ class Connection {
     _isOpen = false;
     await _socket.flush();
     await _socket.close();
+    _printer?.call(
+      LogLevel.error,
+      owner == ConnectionOwner.server ? LogActor.server : LogActor.client,
+      'Closing connection $id',
+    );
   }
 
   @override
