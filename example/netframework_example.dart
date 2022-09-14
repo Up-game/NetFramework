@@ -46,29 +46,23 @@ class MyServer extends Server<Directives> {
 }
 
 void main() async {
-  MyServer server = MyServer(6000);
-  await server.start();
+  final rp = ReceivePort();
+  await Isolate.spawn(startServer, rp.sendPort);
+  // wait for server to start and send port
+  final SendPort sp = await rp.first;
 
-  await Isolate.spawn(startClient, null);
+  MyClient client = MyClient();
+  await client.connect('localhost', 6000);
+  client.ping();
 
   ProcessSignal.sigint.watch().listen((signal) async {
     if (signal != ProcessSignal.sigusr1) {
       print("Killing server !");
-      await server.stop();
+      sp.send(null);
+      await client.disconnect();
       exit(0);
     }
   });
-
-  while (true) {
-    await server.update(blocking: true);
-  }
-}
-
-void startClient(int? _) async {
-  MyClient client = MyClient();
-  await client.connect('localhost', 6000);
-
-  client.ping();
 
   while (true) {
     await Future.delayed(Duration(milliseconds: 1));
@@ -82,9 +76,26 @@ void startClient(int? _) async {
         final duration = now.difference(old);
         print("[MyClient]Pong in ${duration.inMilliseconds}ms");
       }
-
       break;
     }
   }
   await client.disconnect();
+}
+
+void startServer(SendPort sp) async {
+  final rp = ReceivePort();
+
+  MyServer server = MyServer(6000);
+  await server.start();
+  print("[Server]Started.");
+  sp.send(rp.sendPort);
+
+  rp.listen((message) async {
+    await server.stop();
+    Isolate.exit();
+  });
+
+  while (true) {
+    await server.update(blocking: true);
+  }
 }
