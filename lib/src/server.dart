@@ -11,6 +11,7 @@ import 'utils/log.dart';
 const int intMax = 9223372036854775807;
 
 abstract class Server {
+  bool _isRunning = false;
   final Queue<OwnedMessage> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
@@ -25,12 +26,15 @@ abstract class Server {
 
   Queue<OwnedMessage> get incoming => _messagesQueueIn;
 
+  bool get isRunning => _isRunning;
+
   Future<void> start() async {
     try {
       _serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, port);
     } catch (e) {
       throw ServerBindingException();
     }
+    _isRunning = true;
     _printer?.call(
       LogLevel.info,
       LogActor.server,
@@ -51,6 +55,7 @@ abstract class Server {
       LogActor.server,
       'Server stopped.',
     );
+    _isRunning = false;
     onServerStopped();
   }
 
@@ -96,6 +101,7 @@ abstract class Server {
   /// Called when the serverSocket has an error.
   void _onError(Object error) {
     _serverSocket?.close();
+    _isRunning = false;
   }
 
   /// Called when a new connection is established.
