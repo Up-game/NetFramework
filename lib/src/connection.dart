@@ -22,12 +22,12 @@ enum ConnectionOwner {
   }
 }
 
-class Connection<T extends Enum> {
+class Connection {
   static int idCounter = 0;
   final int id;
   final ConnectionOwner owner;
   final Socket _socket;
-  final Queue<OwnedMessage<T>> _messagesQueueIn;
+  final Queue<OwnedMessage> _messagesQueueIn;
   final void Function(Connection)? _onDoneCallback;
   final void Function(Connection)? _onEventCallback;
   final void Function(Connection, Object)? _onErrorCallback;
@@ -42,7 +42,7 @@ class Connection<T extends Enum> {
   Connection({
     required this.owner,
     required Socket socket,
-    required Queue<OwnedMessage<T>> messagesQueueIn,
+    required Queue<OwnedMessage> messagesQueueIn,
     void Function(Connection)? onDoneCallback,
     void Function(Connection)? onEventCallback,
     void Function(Connection, Object)? onErrorCallback,
@@ -104,9 +104,9 @@ class Connection<T extends Enum> {
 
   void _onEvent(Uint8List data) {
     print("[$owner]received event: ${data.length} bytes");
-    final message = Message<T>.fromBytes(data);
+    final message = Message.fromBytes(data);
 
-    final ownedMessage = OwnedMessage<T>(connection: this, message: message);
+    final ownedMessage = OwnedMessage(connection: this, message: message);
     _messagesQueueIn.add(ownedMessage);
 
     // this will be called only by the server.
@@ -134,7 +134,7 @@ class Connection<T extends Enum> {
     _socket.close();
   }
 
-  void send(Message<T> message) {
+  void send(Message message) {
     message.pack();
     _socket.add(message.data!);
   }

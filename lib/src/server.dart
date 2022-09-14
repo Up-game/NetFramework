@@ -9,8 +9,8 @@ import 'message.dart';
 
 const int intMax = 9223372036854775807;
 
-abstract class Server<T extends Enum> {
-  final Queue<OwnedMessage<T>> _messagesQueueIn = Queue();
+abstract class Server {
+  final Queue<OwnedMessage> _messagesQueueIn = Queue();
   final List<Connection> _connections = [];
   final int port;
   // This StreamController is used to block the update loop.
@@ -21,7 +21,7 @@ abstract class Server<T extends Enum> {
 
   Server(this.port);
 
-  Queue<OwnedMessage<T>> get incoming => _messagesQueueIn;
+  Queue<OwnedMessage> get incoming => _messagesQueueIn;
 
   Future<void> start() async {
     try {
@@ -56,20 +56,20 @@ abstract class Server<T extends Enum> {
 
     while (_messagesQueueIn.isNotEmpty && (numberOfMessageToRead--) != 0) {
       print(_messagesQueueIn.length);
-      final OwnedMessage<T> message = _messagesQueueIn.removeFirst();
+      final OwnedMessage message = _messagesQueueIn.removeFirst();
       onMessage(message.connection, message.message);
     }
   }
 
   /// Send a [message] to a [connection].
-  void sendToClient(Connection connection, Message<T> message) {
+  void sendToClient(Connection connection, Message message) {
     if (connection.isOpen) {
       connection.send(message);
     }
   }
 
   /// Send a [message] to all connected clients.
-  void sendToAllClients(Message<T> message) {
+  void sendToAllClients(Message message) {
     for (final connection in _connections) {
       if (connection.isOpen) {
         connection.send(message);
@@ -122,7 +122,7 @@ abstract class Server<T extends Enum> {
   }
 
   /// Called when a message is received from a connection.
-  void onMessage(Connection connection, Message<T> message) {
+  void onMessage(Connection connection, Message message) {
     print("[SERVER]Message received.");
   }
 

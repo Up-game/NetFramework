@@ -1,16 +1,15 @@
 import 'dart:typed_data';
 import 'package:messagepack/messagepack.dart';
 import 'package:netframework/src/connection.dart';
-import 'package:netframework/src/utils/utils.dart';
 
-class MessageHeader<T extends Enum> {
-  T id;
+class MessageHeader {
+  int id;
 
   MessageHeader({required this.id});
 }
 
-class Message<T extends Enum> {
-  late final MessageHeader<T> header;
+class Message {
+  late final MessageHeader header;
   final _packer = Packer();
   final Unpacker? _unpacker;
   Uint8List? _data;
@@ -23,9 +22,9 @@ class Message<T extends Enum> {
 
     final id = unpacker.unpackInt();
 
-    MessageHeader<T> header = MessageHeader(id: callValuesOfEnum<T>(T)[id!]);
+    MessageHeader header = MessageHeader(id: id ?? -1);
 
-    return Message<T>(header: header, unpacker: unpacker);
+    return Message(header: header, unpacker: unpacker);
   }
 
   /// Get the data as a [Uint8List].
@@ -40,7 +39,7 @@ class Message<T extends Enum> {
   ///
   /// It should be called before adding any data.
   void addHeader() {
-    _packer.packInt(header.id.index);
+    _packer.packInt(header.id);
   }
 
   /// Add an [int] to the message.
@@ -99,9 +98,9 @@ class Message<T extends Enum> {
   }
 }
 
-class OwnedMessage<T extends Enum> {
+class OwnedMessage {
   final Connection connection;
-  final Message<T> message;
+  final Message message;
 
   OwnedMessage({required this.connection, required this.message});
 }
