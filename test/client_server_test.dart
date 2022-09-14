@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:netframework/src/client.dart';
 import 'package:netframework/src/connection.dart';
 import 'package:netframework/src/message.dart';
@@ -9,15 +11,22 @@ enum Directives {
   other,
 }
 
-class MyClient extends Client<Directives> {}
+class MyClient extends Client<Directives> {
+  void sendHelloWolrd() {
+    Message<Directives> m = Message(header: MessageHeader(id: Directives.test));
+    m.addHeader();
+    m.addString('Hello world');
+
+    send(m);
+  }
+}
 
 class MyServer extends Server<Directives> {
   MyServer(int port) : super(port);
 
   void handleTest(Connection connection, Message<Directives> message) {
-    int? i = message.getInt();
     String? s = message.getString();
-    print("Handling message: $i, $s");
+    print("[MyServer]Handling message: $s");
 
     Message<Directives> response =
         Message(header: MessageHeader(id: Directives.other));
@@ -29,7 +38,7 @@ class MyServer extends Server<Directives> {
 
   @override
   void onMessage(Connection connection, Message<Directives> message) {
-    print("Server received message: $message");
+    print("[MyServer]Server received message: $message");
     switch (message.header.id) {
       case Directives.test:
         handleTest(connection, message);
@@ -45,21 +54,22 @@ void main() {
     test('Send data from client to server', () async {
       MyServer server = MyServer(6000);
       await server.start();
+      await Future.delayed(Duration(milliseconds: 1000));
 
       MyClient client = MyClient();
       await client.connect('localhost', 6000);
 
-      Message<Directives> m =
-          Message(header: MessageHeader(id: Directives.test));
-      m.addHeader();
-      m.addInt(10);
-      m.addString('Hello world');
+      await Future.delayed(Duration(milliseconds: 1000));
 
-      client.send(m);
+      print("TAILLE:" + server.incoming.length.toString());
 
-      for (int i = 0; i < 10; i++) {
-        server.update();
+      client.sendHelloWolrd();
+      client.sendHelloWolrd();
+      client.sendHelloWolrd();
+      client.sendHelloWolrd();
 
+      while (true) {
+        server.update(blocking: false);
         if (client.incoming.isNotEmpty) {
           OwnedMessage response = client.incoming.removeFirst();
           Message m = response.message;

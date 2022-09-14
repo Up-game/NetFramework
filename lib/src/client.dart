@@ -15,7 +15,7 @@ abstract class Client<T extends Enum> {
   Connection<T>? get connection => _connection;
 
   /// Connect to the server with an [ip] and a [port].
-  Future<void> connect(String ip, int port) async {
+  Future<bool> connect(String ip, int port) async {
     final socket = await Socket.connect(ip, port);
     _connection = Connection<T>(
       owner: ConnectionOwner.client,
@@ -25,22 +25,27 @@ abstract class Client<T extends Enum> {
       onErrorCallback: onError,
     );
 
+    bool handshakeOk = await _connection!.handshake();
+    if (!handshakeOk) return false;
+    _connection!.startListening();
+
     onConnected();
+    return true;
   }
 
   /// Called when the connection is established.
   void onConnected() {
-    print("connected");
+    print("[CLIENT]connected");
   }
 
   /// Called when the connection is closed.
   void onDone(Connection connection) {
-    print("done");
+    print("[CLIENT]done");
   }
 
   /// Called when the connection is closed.
   void onError(Connection connection, Object error) {
-    print("error: $error");
+    print("[CLIENT]error: $error");
   }
 
   /// called when a message is received.

@@ -13,7 +13,7 @@ class MyClient extends Client<Directives> {
     Message<Directives> m = Message(header: MessageHeader(id: Directives.ping));
     m.addHeader();
     m.addString(DateTime.now().toIso8601String());
-    print("Ping");
+    print("[MyClient]Ping");
     send(m);
   }
 }
@@ -34,7 +34,7 @@ class MyServer extends Server<Directives> {
 
   @override
   void onMessage(Connection connection, Message<Directives> message) {
-    print("Server received message: $message");
+    print("[MyServer]Received message: $message");
     switch (message.header.id) {
       case Directives.ping:
         handlePing(connection, message);
@@ -80,7 +80,7 @@ void startClient(int? _) async {
         String? s = m.getString();
         final old = DateTime.parse(s!);
         final duration = now.difference(old);
-        print("Pong in ${duration.inMilliseconds}ms");
+        print("[MyClient]Pong in ${duration.inMilliseconds}ms");
       }
 
       break;
